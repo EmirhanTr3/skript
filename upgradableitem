@@ -1,0 +1,78 @@
+options:
+	sharp cost: 25
+	max sharp: 255
+	fire aspect cost: 20
+	max fire aspect: 69
+	
+command /getupgradableitem:
+	permission: *
+	trigger:
+		give player 1 of unbreakable diamond sword named "&bUpgradable Sword" with lore "&cUpgradable" and "&cUntradeable"
+		
+on right click:
+	if lore of player's tool contains "&cUpgradable":
+		set (metadata value "upgrade" of player) to chest inventory with 6 rows named "&6Upgrade Menu"
+		setguicorners(player, "upgrade", light blue stained glass pane)
+		usetslot(player, 49, "upgrade", player's tool)
+		if sharpness level of player's tool < {@max sharp}:
+			usetslot(player, 10, "upgrade", diamond sword named "&cSharpness +1" with lore "&7Current Level: %sharpness level of player's tool ? 0%" and "&6Cost: {@sharp cost} Gravelcoins" with all flags hidden)
+		else:
+			usetslot(player, 10, "upgrade", glowing diamond sword named "&cSharpness +1" with lore "&7Current Level: %sharpness level of player's tool%" and "&cMAXED" with all flags hidden)
+		if fire aspect level of player's tool < {@max fire aspect}:
+			usetslot(player, 11, "upgrade", flint and steel named "&cFire Aspect +1" with lore "&7Current Level: %fire aspect level of player's tool ? 0%" and "&6Cost: {@fire aspect cost} Gravelcoins" with all flags hidden)
+		else:
+			usetslot(player, 11, "upgrade", glowing flint and steel named "&cFire Aspect +1" with lore "&7Current Level: %fire aspect level of player's tool%" and "&cMAXED" with all flags hidden)
+		open (metadata value "upgrade" of player) to player
+		
+on inventory click:
+	event-inventory = metadata value "upgrade" of player
+	cancel event
+	if lore of player's tool does not contain "&cUpgradable":
+		message "&cYou can NOT abuse this system to illegally enchant your items!"
+		close player's inventory
+		stop
+			
+	if index of event-slot is 10:
+		stop if checkEnoughCoins(player, {@sharp cost}) is false
+		enchant player's tool with ("Sharpness %sharpness level of player's tool + 1%" parsed as enchantment type)
+		remove {@sharp cost} from {gravelcoins::%player's uuid%}
+		setloreAndSet(player, index of event-slot, event-item, 1, "&7Current Level: %sharpness level of player's tool%")
+		setLoreAndSet(player, index of event-slot, event-item, 2, "&cMAXED") if sharpness level of tool > {@max sharp}
+		updateGuiItem(player) if event-item's lore does not contain "&cMAXED"
+	
+	if index of event-slot is 11:
+		stop if checkEnoughCoins(player, {@fire aspect cost}) is false
+		enchant player's tool with ("Fire Aspect %fire aspect level of player's tool + 1%" parsed as enchantment type)
+		remove {@fire aspect cost} from {gravelcoins::%player's uuid%}
+		setLoreAndSet(player, index of event-slot, event-item, 1, "&7Current Level: %fire aspect level of player's tool%")
+		setLoreAndSet(player, index of event-slot, event-item, 2, "&cMAXED") if fire aspect level of tool > {@max fire aspect}
+		updateGuiItem(player) if event-item's lore does not contain "&cMAXED"
+	
+function checkEnoughCoins(p: player, c: integer) :: boolean:
+	set {_u} to uuid of {_p}
+	if {gravelcoins::%{_u}%} < {_c}:
+		send "&cYou do not have enough gravelcoins to upgrade!" to {_p}
+		close {_p}'s inventory
+		return false
+
+function setLoreAndSet(p: player, s: integer, i: item, l: integer, t: text):
+	set line {_l} of lore of {_i} to {_t}
+	set slot {_s} of metadata value "upgrade" of {_p} to {_i}
+
+function updateGuiItem(p: player):
+	set slot 49 of metadata value "upgrade" of {_p} to tool of {_p}
+
+function setguicorners(p: player, v: text, i: item):
+		set slot (integers between 0 and 8) of metadata value {_v} of {_p} to {_i}
+		set slot (integers between 45 and 53) of metadata value {_v} of {_p} to {_i}
+		set slot 9 of metadata value {_v} of {_p} to {_i}
+		set slot 18 of metadata value {_v} of {_p} to {_i}
+		set slot 27 of metadata value {_v} of {_p} to {_i}
+		set slot 36 of metadata value {_v} of {_p} to {_i}
+		set slot 17 of metadata value {_v} of {_p} to {_i}
+		set slot 26 of metadata value {_v} of {_p} to {_i}
+		set slot 35 of metadata value {_v} of {_p} to {_i}
+		set slot 44 of metadata value {_v} of {_p} to {_i}
+
+function usetslot(p: player, s: integer, v: text, i: item):
+	set slot {_s} of metadata value {_v} of {_p} to {_i}
